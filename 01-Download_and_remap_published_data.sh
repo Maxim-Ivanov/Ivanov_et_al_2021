@@ -220,7 +220,7 @@ samtools merge tss_merged_final.bam tss_rep?_final.bam
 for str in "+" "-"; do echo $str; [ "$str" = "+" ] && n="fw" || n="rev"; for file in tss*final.bam; do echo $file && bedtools genomecov -ibam $file -bg -5 -strand $str | sort -k 1,1 -k 2,2n > ${file/final.bam/}${n}.bg; done; done
 
 # Merge forward and reverse Bedgraph files corresponding to the same sample (skip singleton positions):
-for f1 in tss*fw.bg; do f2=${f1/fw/rev} && out=${f1/fw.bg/fw_rev.bedgraph.gz} && echo $f1 "+" $f2 "=" $out && awk 'BEGIN{OFS="\t"}{print $1,$2,$3,"-"$4}' $f2 | cat $f1 - | awk '{if ($4>1) print}' | sort -k1,1 -k2,2n | sed '1i track type=bedGraph color=0,100,200 altColor=200,100,0' | gzip > $out; done
+for f1 in tss*fw.bg; do f2=${f1/fw/rev} && out=${f1/fw.bg/fw_rev.bedgraph.gz} && echo $f1 "+" $f2 "=" $out && awk 'BEGIN{OFS="\t"}{print $1,$2,$3,"-"$4}' $f2 | cat $f1 - | awk '{if (sqrt($4*$4)>1) print}' | sort -k1,1 -k2,2n | sed '1i track type=bedGraph color=0,100,200 altColor=200,100,0' | gzip > $out; done
 
 ############################################################
 #####                     3' DRS-seq                   #####
