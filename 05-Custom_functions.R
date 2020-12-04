@@ -43,7 +43,9 @@ skip_pairs_with_wrong_strands <- function(g1, g2) {
 
 # -----------------------------------------------------------------------------------------------------------
 
-compare_gene_borders <- function(g1, g2, groups = NULL, type = "freqpoly", title = "Difference of gene borders", facet_labels = c("5\' borders", "3\' borders"), ylab = "Number of gene pairs", bins = 50, size = 1, xlim = c(-500, 500), width = 7, height = 6, units = "in") {
+compare_gene_borders <- function(g1, g2, groups = NULL, type = "freqpoly", title = "Difference of gene borders", 
+                                 facet_labels = c("5\' borders", "3\' borders"), ylab = "Number of gene pairs", 
+                                 bins = 50, size = 1, xlim = c(-500, 500), width = 7, height = 6, units = "in", xlab_nbreaks = NULL) {
   # borders of g1 are plotted relative to g2
   # Negative values: border of g1 is located upstream from the respective g2 border
   # Positive values: g1 starts or ends downstream from g2
@@ -61,6 +63,9 @@ compare_gene_borders <- function(g1, g2, groups = NULL, type = "freqpoly", title
   }
   p <- p + xlim(xlim[[1]], xlim[[2]]) + ggtitle(title) + geom_vline(xintercept = 0, linetype = "dotted") +
     xlab("Difference of coordinates, bp") + ylab(ylab) + facet_grid(. ~ type) + theme_bw() + theme(legend.title = element_blank())
+  if (!is.null(xlab_nbreaks) && is.numeric(xlab_nbreaks) && length(xlab_nbreaks) == 1) {
+    p <- p + scale_x_continuous(breaks = scales::breaks_extended(n = xlab_nbreaks))
+  }
   for (ext in c(".png", ".pdf")) {
     ggsave(paste0(title, ext), plot = p, width = width, height = height, units = units)
   }
@@ -186,7 +191,8 @@ filter_internal_exons_in_chosen_genes <- function(tx, mode, chosen_gid) {
 
 # -------------------------------------------------------------------------------------------------------
 
-find_novel_internal_exons <- function(tx1, tx2, g1 = NULL, g2 = NULL, max_diff = 5L, title = "Difference of matched exon borders", width = 6, height = 4) {
+find_novel_internal_exons <- function(tx1, tx2, g1 = NULL, g2 = NULL, max_diff = 5L, title = "Difference of matched exon borders", 
+                                      width = 6, height = 4, xlab_nbreaks = NULL) {
   stopifnot(!is.null(g1) && !is.null(g1))
   # g1 and g2 are expected to be pairs of matched genes:
   stopifnot(length(g1) == length(g2))
@@ -225,7 +231,8 @@ find_novel_internal_exons <- function(tx1, tx2, g1 = NULL, g2 = NULL, max_diff =
   par2 <- ex2[subjectHits(hits)]
   # Plot how exactly do they match:
   compare_gene_borders(p2, par2, type = "barplot", title = title, facet_labels = c("Acceptor site", "Donor site"),
-                       ylab = "Number of exon pairs", bins = 2 * max_diff, size = 1, xlim = c(-max_diff, max_diff), width = width, height = height)
+                       ylab = "Number of exon pairs", bins = 2 * max_diff, size = 1, xlim = c(-max_diff, max_diff), 
+                       width = width, height = height, xlab_nbreaks = xlab_nbreaks)
   # 3) Novel exons with overlap to known exons:
   if (length(idx) > 0) {
     other <- ex1_over[-idx]
@@ -476,8 +483,8 @@ metageneMatrix <- function(signal, intervals, scaling = FALSE, matrix.length = N
 # -----------------------------------------------------------------------------------------------------
 
 drawMetagenePlot <- function(mat_list, drawCI = TRUE, x.axis = FALSE, title = "Metagene_plot", filename = NULL, xlabel = "Intervals of interest", 
-                             ylabel = "Average signal", vline = FALSE, hline = FALSE, width = NA, height = NA, units = "in", plotPDF = TRUE, 
-                             scale.plot = NA, linetype = 0, alpha = 0.25, ylim = NA, custom.colors = NA, out_dir = ".") {
+                             ylabel = "Average signal", vline = FALSE, hline = FALSE, linetype = "solid", width = NA, height = NA, units = "in", plotPDF = TRUE, 
+                             alpha = 1, alpha_CI = 0.25, scale.plot = NA, linetype = 0, ylim = NA, custom.colors = NA, out_dir = ".") {
   library(ggplot2)
   if (identical(x.axis, FALSE)) {
     x.axis <- seq_len(ncol(mat_list[[1]]))
@@ -500,15 +507,15 @@ drawMetagenePlot <- function(mat_list, drawCI = TRUE, x.axis = FALSE, title = "M
     }
     long_df <- rbind(long_df, df)
   }
-  p <- ggplot(long_df, aes(x = pos, y = avg, color = group)) + geom_line(size=1) + ggtitle(title) + xlab(xlabel) + ylab(ylabel) + theme_bw()
+  p <- ggplot(long_df, aes(x = pos, y = avg, color = group)) + geom_line(size = 1, alpha = alpha) + ggtitle(title) + xlab(xlabel) + ylab(ylabel) + theme_bw()
   if (isTRUE(drawCI)) {
-    p <- p + geom_ribbon(aes(x = pos, ymin = lower, ymax = upper, fill = group), alpha = alpha, linetype = linetype)
+    p <- p + geom_ribbon(aes(x = pos, ymin = lower, ymax = upper, fill = group), alpha = alpha_CI, linetype = "blank")
   }
   if (is.numeric(vline)) {
-    p <- p + geom_vline(xintercept = vline)
+    p <- p + geom_vline(xintercept = vline, linetype = linetype)
   }
   if (is.numeric(hline)) {
-    p <- p + geom_hline(yintercept = hline)
+    p <- p + geom_hline(yintercept = hline, linetype = linetype)
   }
   if (!all(is.na(ylim))) {
     p <- p + ylim(ylim[[1]], ylim[[2]])
@@ -520,9 +527,9 @@ drawMetagenePlot <- function(mat_list, drawCI = TRUE, x.axis = FALSE, title = "M
     filename <- title
   }
   filename <- sub("\n", " ", filename)
-  ggsave(filename = file.path(out_dir, paste0(filename, ".png")), plot = p, width=width, height=height, units=units)
+  ggsave(filename = file.path(out_dir, paste0(filename, ".png")), plot = p, width = width, height = height, units = units)
   if (isTRUE(plotPDF)) {
-    ggsave(filename = file.path(out_dir, paste0(filename, ".pdf")), plot = p, width=width, height=height, units=units)
+    ggsave(filename = file.path(out_dir, paste0(filename, ".pdf")), plot = p, width = width, height = height, units = units)
   }
 }
 

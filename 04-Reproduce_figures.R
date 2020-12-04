@@ -136,44 +136,43 @@ compute_stats_on_percent_overlap(hml_par2, ara_par, threshold = 0.9)
 hc_trio <- hml_trio[mcols(hml_trio)$type == "HC"]
 
 # Generate windows around TSS and PAS:
-tss_win_hc <- granges(hc_trio) %>% generate_windows_around_tss_or_pas(mode = "start", width = 200)
-tss_win_tair <- mcols(hc_trio)$tair_mate %>% generate_windows_around_tss_or_pas(mode = "start", width = 200)
-tss_win_ara <- mcols(hc_trio)$ara_mate %>% generate_windows_around_tss_or_pas(mode = "start", width = 200)
+tss_win_hc <- granges(hc_trio) %>% generate_windows_around_tss_or_pas(mode = "start", width = 50)
+tss_win_tair <- mcols(hc_trio)$tair_mate %>% generate_windows_around_tss_or_pas(mode = "start", width = 50)
+tss_win_ara <- mcols(hc_trio)$ara_mate %>% generate_windows_around_tss_or_pas(mode = "start", width = 50)
 
-pas_win_hc <- granges(hc_trio) %>% generate_windows_around_tss_or_pas(mode = "end", width = 200)
-pas_win_tair <- mcols(hc_trio)$tair_mate %>% generate_windows_around_tss_or_pas(mode = "end", width = 200)
-pas_win_ara <- mcols(hc_trio)$ara_mate %>% generate_windows_around_tss_or_pas(mode = "end", width = 200)
+pas_win_hc <- granges(hc_trio) %>% generate_windows_around_tss_or_pas(mode = "end", width = 50)
+pas_win_tair <- mcols(hc_trio)$tair_mate %>% generate_windows_around_tss_or_pas(mode = "end", width = 50)
+pas_win_ara <- mcols(hc_trio)$ara_mate %>% generate_windows_around_tss_or_pas(mode = "end", width = 50)
 
 # Draw metagenes around TSS:
 tss_m1 <- metageneMatrix(tss_data, tss_win_hc, scaling = FALSE, skip.zeros = FALSE, skip.outliers = FALSE)
 tss_m2 <- metageneMatrix(tss_data, tss_win_tair, scaling = FALSE, skip.zeros = FALSE, skip.outliers = FALSE)
 tss_m3 <- metageneMatrix(tss_data, tss_win_ara, scaling = FALSE, skip.zeros = FALSE, skip.outliers = FALSE)
 tss_matlist <- list("HC genes" = tss_m1, "TAIR10" = tss_m2, "Araport11" = tss_m3)
-drawMetagenePlot(tss_matlist, x.axis = seq(-99, 100), vline = 0, title = "TSS-seq around gene starts", 
-                 xlabel = "Windows 200 bp centered at gene starts", ylabel = "TSS-seq signal", width = 5, height = 8, units = "in") # Fig. 2D (left)
+drawMetagenePlot(tss_matlist, x.axis = seq(-25, 24), vline = 0, linetype = "dotted", title = "TSS-seq around gene starts", 
+                 xlabel = "Windows 50 bp centered at gene starts", ylabel = "TSS-seq signal", width = 5, height = 8, units = "in") # Fig. 2D
 
 # Draw metagenes around PAS:
 pas_m1 <- metageneMatrix(drs_data, pas_win_hc, scaling = FALSE, skip.zeros = FALSE, skip.outliers = FALSE)
 pas_m2 <- metageneMatrix(drs_data, pas_win_tair, scaling = FALSE, skip.zeros = FALSE, skip.outliers = FALSE)
 pas_m3 <- metageneMatrix(drs_data, pas_win_ara, scaling = FALSE, skip.zeros = FALSE, skip.outliers = FALSE)
 pas_matlist <- list("HC genes" = pas_m1, "TAIR10" = pas_m2, "Araport11" = pas_m3)
-drawMetagenePlot(pas_matlist, x.axis = seq(-99, 100), vline = 0, title = "Helicos 3\' DRS-seq around gene ends", 
-                 xlabel = "Windows 200 bp centered at gene ends", ylabel = "3\' DRS-seq signal", width = 5, height = 8, units = "in") # Fig. 2D (right)
+drawMetagenePlot(pas_matlist, x.axis = seq(-25, 24), vline = 0, linetype = "dotted", title = "Helicos 3\' DRS-seq around gene ends", 
+                 xlabel = "Windows 50 bp centered at gene ends", ylabel = "3\' DRS-seq signal", width = 5, height = 8, units = "in") # Fig. 2E
 
 
 ##### Analyze internal exons in re-discovered known genes (only matched pairs of genes are considered) ---------------------------------
 
-# Fig. 3B (upper):
-out1_m <- find_novel_internal_exons(hml_tx, ebt_tair, hml_par1, tair_par, title = "Difference of matched exon borders in matched gene pairs (called vs TAIR10)") 
+# Fig. 3B:
+out1_m <- find_novel_internal_exons(hml_tx, ebt_tair, hml_par1, tair_par, xlab_nbreaks = 8, title = "Difference of matched exon borders in matched gene pairs (called vs TAIR10)") 
 
-# Fig. 3B (lower):
-out2_m <- find_novel_internal_exons(hml_tx, ebt_ara, hml_par2, ara_par, title = "Difference of matched exon borders in matched gene pairs (called vs Araport11)")
+#out2_m <- find_novel_internal_exons(hml_tx, ebt_ara, hml_par2, ara_par, xlab_nbreaks = 8, title = "Difference of matched exon borders in matched gene pairs (called vs Araport11)")
 
 # Fig. 3A:
 tbl <- tibble("TAIR10" = lapply(out1_m, length), "Araport11" = lapply(out2_m, length), type = names(out1_m)) %>% 
   pivot_longer(cols = c("TAIR10", "Araport11"), names_to = "ann") %>% arrange(ann)
 tbl$ann <- tbl$ann %>% as_factor() %>% relevel(ref = "TAIR10")
-tbl$type <- tbl$type %>% factor(levels = c("No_overlap", "Exact_match", "IR", "Alt_donor", "Alt_acceptor", "Other"))
+tbl$type <- tbl$type %>% factor(levels = c("No overlap", "Exact match", "IR", "Alt donor", "Alt acceptor", "Other"))
 title <- "Classification of internal exons in matched gene pairs"
 p <- ggplot(tbl, aes(x = ann, y = value, fill = type)) + geom_bar(stat = "identity", width = 0.6, colour = "white") + xlab(NULL) + 
   ylab("Number of exons") + theme_bw() + theme(legend.title = element_blank()) + ggtitle(title)
@@ -247,7 +246,7 @@ lnc_as_ara <- overlapsAny(lncrna_novel, genes_ara, ignore.strand = TRUE)
 tbl <- tibble(total = c(sum(hc), sum(mc), sum(lc), length(lncrna_novel)), 
               as_tair = c(sum(hc & hml_as_tair), sum(mc & hml_as_tair), sum(lc & hml_as_tair), sum(lnc_as_tair)),
               as_ara = c(sum(hc & hml_as_ara), sum(mc & hml_as_ara), sum(lc & hml_as_ara), sum(lnc_as_ara)),
-              type = c("HC", "MC", "LC", "lncRNA"))
+              type = c("HC", "MC", "LC", "tr.RNA"))
 tbl2 <- tbl %>% mutate(ig_tair = total - as_tair, ig_ara = total - as_ara) %>% dplyr::select(-total) %>% 
   pivot_longer(cols = c(as_tair, as_ara, ig_tair, ig_ara)) %>% separate(name, into = c("as", "ann"), sep = "_")
 tbl2$as <- ifelse(tbl2$as == "as", "Antisense", "Intergenic") %>% as_factor() %>% relevel(ref = "Antisense")
@@ -284,7 +283,7 @@ metagene_matrix_with_flanks <- function(signal, win, extend_by = 100L, mlen = c(
 
 m1 <- metagene_matrix_with_flanks(pnet_cov, hml_novel)
 m2 <- metagene_matrix_with_flanks(pnet_cov, lncrna_novel)
-ml1 <- list("Novel HC MC LC genes" = m1, "Novel lncRNAs" = m2)
+ml1 <- list("Novel HC MC LC genes" = m1, "Novel transient RNAs" = m2)
 drawMetagenePlot(ml1, title = "Metagene pNET-seq novel genes", x.axis = seq(-19, 120), vline = c(0, 100), xlabel = "Scaled genes with 100 bp flanks", width = 7, height = 4, units = "in")
 
 
