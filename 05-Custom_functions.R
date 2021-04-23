@@ -537,7 +537,7 @@ drawMetagenePlot <- function(mat_list, drawCI = TRUE, x.axis = FALSE, title = "M
 
 read_stranded_bedGraph <- function(fname, dir = ".", seqinfo = NULL) {
   fpath <- file.path(dir, fname)
-  gr <- trim(rtracklayer::import(fpath, format = "bedGraph", seqinfo = seqinfo))
+  gr <- GenomicRanges::trim(rtracklayer::import(fpath, format = "bedGraph", seqinfo = seqinfo))
   strand(gr) <- ifelse(score(gr) >= 0, "+", "-")
   score(gr) <- abs(score(gr))
   return(sort(gr))
