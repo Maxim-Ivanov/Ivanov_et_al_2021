@@ -144,7 +144,7 @@ classify_genes_by_overlap_with_ref_genes <- function(g, gref) {
 generate_windows_around_tss_or_pas <- function(gr, mode, width) {
   stopifnot(mode %in% c("start", "end"))
   stopifnot(is.numeric(width) && is.atomic(width))
-  out <- suppressWarnings(gr %>% resize(1, mode) %>% resize(width, "center") %>% trim())
+  out <- suppressWarnings(gr %>% resize(1, mode) %>% resize(width, "center") %>% GenomicRanges::trim())
   bad <- width(out) < width
   if (any(bad)) {
     message("Skipped ", sum(bad), " trimmed windows;")
