@@ -64,6 +64,7 @@ lncrna <- results[[3]]
 export(hml_genes_v2, "Called_yeast_genes.bed", format = "BED")
 export(hml_genes_v2_RT, "Called_yeast_genes_with_RT_tails.bed", format = "BED")
 write_grl_as_bed12(hml_tx, "Called_yeast_transcripts.bed")
+export(fusion_genes, "Fusion_yeast_genes.bed", format = "BED")
 write_grl_as_bed12(fusion_tx, "Fusion_yeast_transcripts.bed")
 export(lncrna, "Called_yeast_lncRNAs.bed", format = "BED")
 
