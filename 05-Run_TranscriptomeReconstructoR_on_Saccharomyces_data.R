@@ -4,6 +4,7 @@
 library(TranscriptomeReconstructoR)
 library(tidyverse)
 library(rtracklayer)
+library(GenomicAlignments)
 library(devtools)
 
 devtools::source_url("https://github.com/Maxim-Ivanov/Ivanov_et_al_2021/blob/main/07-Custom_functions.R?raw=TRUE")
@@ -25,7 +26,7 @@ names(pas_data) <- pas_bamfiles %>% basename() %>% str_replace(".bam$", "")
 pas_data <- as(pas_data, "CompressedGRangesList")
 
 # Export the loaded data as tracks for genome browser:
-write_grl_as_bed12(nanopore, "Yeast_Direct_RNAseq.bed")
+write_grl_as_bed12(long_reads, "Yeast_Direct_RNAseq.bed")
 tss_data %>% merge_GRanges() %>% save_GRanges_as_bedGraph("Yeast_CAGEseq.bedgraph.gz")
 pas_data %>% merge_GRanges() %>% save_GRanges_as_bedGraph("Yeast_3pREADS.bedgraph.gz")
 save_GRanges_as_bedGraph(nascent_data, "Yeast_NETseq.bedgraph.gz")
