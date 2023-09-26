@@ -484,7 +484,7 @@ metageneMatrix <- function(signal, intervals, scaling = FALSE, matrix.length = N
 
 drawMetagenePlot <- function(mat_list, drawCI = TRUE, x.axis = FALSE, title = "Metagene_plot", filename = NULL, xlabel = "Intervals of interest", 
                              ylabel = "Average signal", vline = FALSE, hline = FALSE, linetype = "solid", width = NA, height = NA, units = "in", plotPDF = TRUE, 
-                             alpha = 1, alpha_CI = 0.25, scale.plot = NA, linetype = 0, ylim = NA, custom.colors = NA, out_dir = ".") {
+                             alpha = 1, alpha_CI = 0.25, scale.plot = NA, ylim = NA, custom.colors = NA, out_dir = ".") {
   library(ggplot2)
   if (identical(x.axis, FALSE)) {
     x.axis <- seq_len(ncol(mat_list[[1]]))
