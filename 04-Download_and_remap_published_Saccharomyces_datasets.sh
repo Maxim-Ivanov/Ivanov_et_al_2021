@@ -27,16 +27,11 @@ wget ${prefix}_chromosome_II.fa.gz -O Spo2_II.fa.gz
 wget ${prefix}_chromosome_III.fa.gz -O Spo2_III.fa.gz
 wget ${prefix}_mitochondrial_chromosome.fa.gz -O Spo2_MT.fa.gz
 
-zcat Spo2_I.fa.gz | sed '1d;1i >I' | 
-  gzip > temp && mv temp Spo2_I.fa.gz
-zcat Spo2_II.fa.gz | sed '1d;1i >II' | 
-  gzip > temp && mv temp Spo2_II.fa.gz
-zcat Spo2_III.fa.gz | sed '1d;1i >III' | 
-  gzip > temp && mv temp Spo2_III.fa.gz
-zcat Spo2_MT.fa.gz | sed '1d;1i >MT' | 
-  gzip > temp && mv temp Spo2_MT.fa.gz
-zcat Spo2_chr[I|II|III|MT].fa.gz | 
-  gzip > Spo2.fa.gz && rm Spo2_chr[I|II|III|MT].fa.gz
+zcat Spo2_I.fa.gz | sed '1d' | sed '1i >I' | gzip > temp && mv temp Spo2_I.fa.gz
+zcat Spo2_II.fa.gz | sed '1d' | sed '1i >II' | gzip > temp && mv temp Spo2_II.fa.gz
+zcat Spo2_III.fa.gz | sed '1d' | sed '1i >III' | gzip > temp && mv temp Spo2_III.fa.gz
+zcat Spo2_MT.fa.gz | sed '1d' | sed '1i >MT' | gzip > temp && mv temp Spo2_MT.fa.gz
+zcat Spo2_*.fa.gz | gzip > Spo2.fa.gz && rm Spo2_*.fa.gz
 
 # Concatenate Spo2 and SacCer3 genomes:
 zcat Spo2.fa.gz sacCer3.fa.gz > Spo2_sacCer3.fa
@@ -51,12 +46,10 @@ STAR --runMode genomeGenerate \
 wget http://sgd-archive.yeastgenome.org/curation/chromosomal_feature/archive/saccharomyces_cerevisiae.20170114.gff.gz
 
 # Create BED file with coordinates of known rRNA and tRNA genes:
-zcat saccharomyces_cerevisiae.201701014.gff.gz | 
-sed -n '1,/##FASTA/p' | 
-sed '/^#/d;s/^chrmt/chrM/' | 
-awk 'BEGIN{OFS="\t"}{if ($3=="rRNA_gene" || $3=="tRNA_gene") \
-  print $1,$4-100,$5+100,$3,100,$7}' > \
-  SacCer3_rRNA_tRNA_ext100bp.bed
+zcat saccharomyces_cerevisiae.20170114.gff.gz | 
+  sed -n '1,/##FASTA/p' | sed '/^#/d;s/^chrmt/chrM/' | 
+  awk 'BEGIN{OFS="\t"}{if ($3=="rRNA_gene" || $3=="tRNA_gene") \
+    print $1,$4-100,$5+100,$3,100,$7}' > SacCer3_rRNA_tRNA_ext100bp.bed
 
 # Add the whole chrM to the BED file:
 echo -e "chrM\t1\t85779\tchrM_fw\t100\t+\nchrM\t1\t85779\tchrM_rev\t100\t-" >> SacCer3_rRNA_tRNA_ext100bp.bed
@@ -123,7 +116,7 @@ for file in Lu2019*fastq.gz; do
     --outSAMtype BAM Unsorted; 
 done
 
-rm *out *tab; rmdir *STARtmp
+rm *out *tab
 for file in *Aligned*; do mv $file ${file/_Aligned.out/}; done
 
 # Sort BAM files and remove low MAPQ reads:
@@ -162,7 +155,7 @@ for file in Liu2017*trimmed.fq.gz; do
 done
 
 # Align to SacCer3 in Local mode:
-for file in Liu2017*fq.gz; do 
+for file in Liu2017*UMI.fq.gz; do 
   echo $file && 
   STAR --genomeDir ${index_sc} --readFilesIn $file \
     --runThreadN 4 --outFileNamePrefix ${file/.fq.gz/_} \
@@ -171,7 +164,7 @@ for file in Liu2017*fq.gz; do
 done
 
 for file in *Aligned*; do mv $file ${file/_Aligned.out/}; done
-rm -r *STARtmp *out *tab
+rm *out *tab
 
 # Sort BAM files and remove low MAPQ reads:
 for file in Liu2017*bam; do 
@@ -237,7 +230,7 @@ for file in Topal2019*UMI.fq.gz; do
 done
 
 for file in *Aligned*; do mv $file ${file/_Aligned.out/}; done
-rmdir *STARtmp; rm *out *tab
+rm *out *tab
 
 # Sort Marquardt2014 BAM files by coordinates and filter by MAPQ values:
 for file in Marquardt2014*bam; do 
@@ -246,7 +239,7 @@ for file in Marquardt2014*bam; do
   samtools sort - -o ${file/.bam/_mapq.bam}; 
 done
 
-# Sort Topal2019 BAM by coordinates, filter by MAPQ values and remove Spo2 alignments (contig name do not start with "chr"):
+# Sort Topal2019 BAM by coordinates, filter by MAPQ values and remove Spo2 alignments (contig names do not start with "chr"):
 for file in Topal2019*bam; do 
   echo $file && 
   samtools view -hq 10 $file | 
